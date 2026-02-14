@@ -18,58 +18,71 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const db_1 = __importDefault(require("./db"));
 const SwaggerLayer_1 = __importDefault(require("./SwaggerLayer"));
 const getListAPI_1 = __importDefault(require("./getListAPI"));
-const PORT = (process.env.PORT || 9000);
-dotenv_1.default.config();
-const app = (0, express_1.default)();
-app.use(express_1.default.json());
 const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:3001",
     "https://your-frontend-domain.com",
 ];
-// ✅ DB Instance
+dotenv_1.default.config();
 const dataBase = new db_1.default();
-// ✅ Swagger instance
 const SwaggerLayerKit = new SwaggerLayer_1.default();
-/* ---------------- DB INIT (IMPORTANT) ---------------- */
-const onUpdateDBBase = () => {
-    dataBase.MONGODB_URL =
-        "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net";
-    dataBase.dbName = "Simba_Sample";
-    dataBase.collectionName = "simba_sample";
+const PORT = (process.env.PORT || 9000);
+const app = (0, express_1.default)();
+app.use(express_1.default.json());
+const onUpdateDBBase = (props = {}) => {
+    dataBase.MONGODB_URL = (props === null || props === void 0 ? void 0 : props.url) || "";
+    dataBase.dbName = (props === null || props === void 0 ? void 0 : props.dbName) || "";
+    dataBase.collectionName = (props === null || props === void 0 ? void 0 : props.collectionName) || "";
     dataBase.doConnectInit();
+    return props;
 };
-/* ---------------- Swagger INIT ---------------- */
 const onUpdateSwagger = () => {
+    // console.log(
+    //   "SwaggerLayerKit.renderList",
+    //   SwaggerLayerKit.renderList,
+    //   SwaggerLayerKit
+    // )
     SwaggerLayerKit.app = app;
+    SwaggerLayerKit.PORT = PORT;
     SwaggerLayerKit.doInit();
+    // SwaggerLayerKit.renderList.map((layers: any) => {
+    //   let renderDynamicSwagger = SwaggerLayerKit
+    //     ? SwaggerLayerKit[layers ? layers : ""]
+    //     : () => "" as any
+    //   renderDynamicSwagger()
+    // })
 };
-/* ---------------- CORS ---------------- */
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        if (origin === null || origin === void 0 ? void 0 : origin.includes("localhost"))
-            return callback(null, true);
-        if (allowedOrigins.includes(origin) || !origin)
-            return callback(null, true);
-        callback(new Error("Not allowed by CORS"));
+        if (origin === null || origin === void 0 ? void 0 : origin.includes("localhost")) {
+            callback(null, true);
+        }
+        else {
+            if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+                callback(null, true);
+            }
+            else {
+                callback(new Error("Not allowed by CORS BK"));
+            }
+        }
     },
 }));
-/* ---------------- INIT BEFORE ROUTES ---------------- */
-onUpdateDBBase();
-onUpdateSwagger();
-/* ---------------- ROUTES ---------------- */
 (0, getListAPI_1.default)({ app, dataBase });
 app.get("/getList", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const dbName = dataBase.dbName;
         const collectionName = dataBase.collectionName;
+        // Default pagination values
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
         if (!dbName || !collectionName) {
-            return res.status(400).send("Missing dbName or collectionName");
+            res.status(400).send("Missing dbName or collectionName in query params");
+            return;
         }
         dataBase.getDatabase({
+            // dbName,
+            // collectionName,
             skip,
             limit,
             onUpdate: (innerProps) => {
@@ -83,12 +96,32 @@ app.get("/getList", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     catch (error) {
-        console.error("Error:", error);
+        console.error("Error in /getLists:", error);
         res.status(500).send("Internal Server Error");
     }
 }));
-app.listen(PORT, () => {
+let server = app.listen(PORT, () => {
+    onUpdateDBBase({
+        dbName: "Simba_Sample",
+        collectionName: "simba_sample",
+        url: "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net",
+    });
+    onUpdateSwagger();
     console.log(`I am listening on port ${PORT}`);
 });
-/* ---------------- EXPORT FOR VERCEL ---------------- */
-exports.default = app;
+process.on("SIGINT", () => {
+    console.log("SIGINT received, closing server...");
+    server.close(() => __awaiter(void 0, void 0, void 0, function* () {
+        const Kit = (yield dataBase.getCheckConnection());
+        const { status = false } = Kit || {};
+        if (status) {
+            dataBase.terminateClient();
+            process.exit(0);
+        }
+        else {
+            console.log("No DB Connection Available");
+            process.exit(0);
+        }
+        console.log("Server closed gracefully.");
+    }));
+});

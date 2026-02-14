@@ -4,74 +4,80 @@ import dotenv from "dotenv"
 import DB from "./db"
 import SwaggerLayer from "./SwaggerLayer"
 import getListAPI from "./getListAPI"
-const PORT = (process.env.PORT || 9000) as any
-dotenv.config()
-
-const app = express()
-app.use(express.json())
-
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "https://your-frontend-domain.com",
 ]
+dotenv.config()
+const dataBase = new DB()
+const SwaggerLayerKit = new SwaggerLayer() as any
+const PORT = (process.env.PORT || 9000) as any
+const app = express()
 
-// ✅ DB Instance
-const dataBase = new DB() as any
-
-// ✅ Swagger instance
-const SwaggerLayerKit: any = new SwaggerLayer()
-
-/* ---------------- DB INIT (IMPORTANT) ---------------- */
-const onUpdateDBBase = () => {
-  dataBase.MONGODB_URL =
-    "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net"
-  dataBase.dbName = "Simba_Sample"
-  dataBase.collectionName = "simba_sample"
-
+app.use(express.json())
+const onUpdateDBBase = (props: any = {}) => {
+  dataBase.MONGODB_URL = props?.url || ""
+  dataBase.dbName = props?.dbName || ""
+  dataBase.collectionName = props?.collectionName || ""
   dataBase.doConnectInit()
+
+  return props
 }
 
-/* ---------------- Swagger INIT ---------------- */
 const onUpdateSwagger = () => {
+  // console.log(
+  //   "SwaggerLayerKit.renderList",
+  //   SwaggerLayerKit.renderList,
+  //   SwaggerLayerKit
+  // )
   SwaggerLayerKit.app = app
+  SwaggerLayerKit.PORT = PORT
   SwaggerLayerKit.doInit()
+
+  // SwaggerLayerKit.renderList.map((layers: any) => {
+  //   let renderDynamicSwagger = SwaggerLayerKit
+  //     ? SwaggerLayerKit[layers ? layers : ""]
+  //     : () => "" as any
+  //   renderDynamicSwagger()
+  // })
 }
 
-/* ---------------- CORS ---------------- */
 app.use(
   cors({
     origin: (origin: any, callback) => {
-      if (origin?.includes("localhost")) return callback(null, true)
-      if (allowedOrigins.includes(origin) || !origin)
-        return callback(null, true)
-
-      callback(new Error("Not allowed by CORS"))
+      if (origin?.includes("localhost")) {
+        callback(null, true)
+      } else {
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+          callback(null, true)
+        } else {
+          callback(new Error("Not allowed by CORS BK"))
+        }
+      }
     },
   }),
 )
 
-/* ---------------- INIT BEFORE ROUTES ---------------- */
-onUpdateDBBase()
-onUpdateSwagger()
-
-/* ---------------- ROUTES ---------------- */
 getListAPI({ app, dataBase })
 
 app.get("/getList", async (req: any, res: any) => {
   try {
-    const dbName = dataBase.dbName
-    const collectionName = dataBase.collectionName
+    const dbName = dataBase.dbName as string
+    const collectionName = dataBase.collectionName as string
 
-    const page = parseInt(req.query.page) || 1
-    const limit = parseInt(req.query.limit) || 10
+    // Default pagination values
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
     const skip = (page - 1) * limit
 
     if (!dbName || !collectionName) {
-      return res.status(400).send("Missing dbName or collectionName")
+      res.status(400).send("Missing dbName or collectionName in query params")
+      return
     }
-
     dataBase.getDatabase({
+      // dbName,
+      // collectionName,
       skip,
       limit,
       onUpdate: (innerProps: any) => {
@@ -84,13 +90,33 @@ app.get("/getList", async (req: any, res: any) => {
       },
     })
   } catch (error) {
-    console.error("Error:", error)
+    console.error("Error in /getLists:", error)
     res.status(500).send("Internal Server Error")
   }
 })
 
-app.listen(PORT, () => {
+let server = app.listen(PORT, () => {
+  onUpdateDBBase({
+    dbName: "Simba_Sample",
+    collectionName: "simba_sample",
+    url: "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net",
+  })
+  onUpdateSwagger()
   console.log(`I am listening on port ${PORT}`)
 })
-/* ---------------- EXPORT FOR VERCEL ---------------- */
-export default app
+
+process.on("SIGINT", () => {
+  console.log("SIGINT received, closing server...")
+  server.close(async () => {
+    const Kit = (await dataBase.getCheckConnection()) as any
+    const { status = false } = Kit || {}
+    if (status) {
+      dataBase.terminateClient()
+      process.exit(0)
+    } else {
+      console.log("No DB Connection Available")
+      process.exit(0)
+    }
+    console.log("Server closed gracefully.")
+  })
+})
