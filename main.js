@@ -100,13 +100,13 @@ app.get("/getList", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(500).send("Internal Server Error");
     }
 }));
+onUpdateDBBase({
+    dbName: "Simba_Sample",
+    collectionName: "simba_sample",
+    url: "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net",
+});
+onUpdateSwagger();
 let server = app.listen(PORT, () => {
-    onUpdateDBBase({
-        dbName: "Simba_Sample",
-        collectionName: "simba_sample",
-        url: "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net",
-    });
-    onUpdateSwagger();
     console.log(`I am listening on port ${PORT}`);
 });
 process.on("SIGINT", () => {
