@@ -107,7 +107,7 @@ onUpdateDBBase({
 });
 onUpdateSwagger();
 let server = app.listen(PORT, () => {
-    console.log(`I am listening on port ${PORT}`);
+    console.log(`I am listening on port  bk ${PORT}`);
 });
 process.on("SIGINT", () => {
     console.log("SIGINT received, closing server...");

@@ -95,13 +95,13 @@ app.get("/getList", async (req: any, res: any) => {
   }
 })
 
+onUpdateDBBase({
+  dbName: "Simba_Sample",
+  collectionName: "simba_sample",
+  url: "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net",
+})
+onUpdateSwagger()
 let server = app.listen(PORT, () => {
-  onUpdateDBBase({
-    dbName: "Simba_Sample",
-    collectionName: "simba_sample",
-    url: "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net",
-  })
-  onUpdateSwagger()
   console.log(`I am listening on port  bk ${PORT}`)
 })
 
