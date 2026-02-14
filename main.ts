@@ -1,5 +1,5 @@
-const express = require("express")
-const dotenv = require("dotenv")
+import express from "express"
+import dotenv from "dotenv"
 dotenv.config()
 
 const app = express()
@@ -17,11 +17,11 @@ app.use((err: any, req: any, res: any, next: any) => {
 
 app.get("/:name", (req: any, res: any) => {
   const { name } = req.params
-  res.status(200).send(`Name: ${name}`)
+  res.status(200).send(`Name BK : ${name}`)
 })
 
 app.get("/", (req: any, res: any) => {
-  res.send(`App is working fine`)
+  res.send(`App is working fine BK`)
 })
 
 app.use((req: any, res: any, next: any) => {
