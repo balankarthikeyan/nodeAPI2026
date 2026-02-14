@@ -102,7 +102,7 @@ let server = app.listen(PORT, () => {
     url: "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net",
   })
   onUpdateSwagger()
-  console.log(`I am listening on port ${PORT}`)
+  console.log(`I am listening on port  bk ${PORT}`)
 })
 
 process.on("SIGINT", () => {
