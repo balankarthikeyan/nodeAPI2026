@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -22,3 +23,4 @@ app.get("/", (req, res) => {
 app.use((req, res, next) => {
     res.status(404).send("Sorry can't find that!");
 });
+exports.default = app;

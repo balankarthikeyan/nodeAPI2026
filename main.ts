@@ -27,3 +27,5 @@ app.get("/", (req: any, res: any) => {
 app.use((req: any, res: any, next: any) => {
   res.status(404).send("Sorry can't find that!")
 })
+
+export default app
