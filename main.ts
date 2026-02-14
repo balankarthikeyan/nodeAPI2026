@@ -47,7 +47,7 @@ app.get("/:name", async (req: any, res: any) => {
   const data = await Simba.find()
   console.log(data)
   // console.log(Employee)
-  res.status(200).send(`Name BK : ${JSON.stringify(data)}`)
+  res.status(200).send({ data })
 })
 
 app.get("/", (req: any, res: any) => {
