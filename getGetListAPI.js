@@ -9,25 +9,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const getListAPI = (props = {}) => {
+const getGetListAPI = (props = {}) => {
     const { app, dataBase } = props || {};
-    console.log("getPostListAPI");
-    app.post("/getLists", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("getGetListAPI");
+    app.get("/getList", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const { page, limit } = req.body || {};
+            const dbName = dataBase.dbName;
+            const collectionName = dataBase.collectionName;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
             const skip = (page - 1) * limit;
-            if (!page || !limit) {
-                res.status(400).json({ error: "Missing page or limit in request body" });
-                return;
+            if (!dbName || !collectionName) {
+                return res.status(400).send("Missing dbName or collectionName");
             }
             dataBase.getDatabase({
                 skip,
                 limit,
-                // dbName: dataBaseUpdate.dbName,
-                // collectionName: dataBaseUpdate.collectionName,
                 onUpdate: (innerProps) => {
-                    console.log({ data: innerProps.data });
-                    res.json({
+                    res.send({
                         page,
                         limit,
                         data: innerProps.data,
@@ -37,9 +36,9 @@ const getListAPI = (props = {}) => {
             });
         }
         catch (error) {
-            console.error(error);
-            res.status(500).json({ error: "Internal Server Error" });
+            console.error("Error:", error);
+            res.status(500).send("Internal Server Error");
         }
     }));
 };
-exports.default = getListAPI;
+exports.default = getGetListAPI;

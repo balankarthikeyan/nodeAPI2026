@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import DB from "./db"
 import SwaggerLayer from "./SwaggerLayer"
 import getListAPI from "./getListAPI"
+import getGetListAPI from "./getGetListAPI"
 const PORT = (process.env.PORT || 9000) as any
 dotenv.config()
 
@@ -57,40 +58,10 @@ onUpdateSwagger()
 
 /* ---------------- ROUTES ---------------- */
 getListAPI({ app, dataBase })
+getGetListAPI({ app, dataBase })
 
-app.get("/getList", async (req: any, res: any) => {
-  try {
-    const dbName = dataBase.dbName
-    const collectionName = dataBase.collectionName
-
-    const page = parseInt(req.query.page) || 1
-    const limit = parseInt(req.query.limit) || 10
-    const skip = (page - 1) * limit
-
-    if (!dbName || !collectionName) {
-      return res.status(400).send("Missing dbName or collectionName")
-    }
-
-    dataBase.getDatabase({
-      skip,
-      limit,
-      onUpdate: (innerProps: any) => {
-        res.send({
-          page,
-          limit,
-          data: innerProps.data,
-          total: innerProps.totalCount || 0,
-        })
-      },
-    })
-  } catch (error) {
-    console.error("Error:", error)
-    res.status(500).send("Internal Server Error")
-  }
-})
-
-app.listen(PORT, () => {
-  console.log(`I am listening on port ${PORT}`)
-})
+// app.listen(PORT, () => {
+//   console.log(`I am listening on port ${PORT}`)
+// })
 /* ---------------- EXPORT FOR VERCEL ---------------- */
 export default app

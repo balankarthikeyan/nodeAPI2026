@@ -1,5 +1,6 @@
 const getListAPI = (props = {} as any) => {
   const { app, dataBase } = props || {}
+  console.log("getPostListAPI")
   app.post("/getLists", async (req: any, res: any) => {
     try {
       const { page, limit } = req.body || {}
