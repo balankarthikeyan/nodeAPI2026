@@ -1,68 +1,55 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const cors_1 = __importDefault(require("cors"));
-const db_1 = __importDefault(require("./db"));
-const SwaggerLayer_1 = __importDefault(require("./SwaggerLayer"));
-const getListAPI_1 = __importDefault(require("./getListAPI"));
-const getGetListAPI_1 = __importDefault(require("./getGetListAPI"));
+const mongoose_1 = __importDefault(require("mongoose"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 const port = process.env.PORT || 9000;
+mongoose_1.default
+    .connect("mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net/Simba_Sample")
+    .then(() => console.log("DB connected"))
+    .catch((err) => console.log(err));
+// mongoose
+//   .connect(
+//     (process.env.MONGO_URI ||
+//       "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net") as string,
+//   )
+//   .then(() => console.log("MongoDB connected"))
+//   .catch((err) => console.error("MongoDB connection error:", err))
 app.listen(port, () => {
     console.log(`App is listening on port ${port}`);
 });
-const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://your-frontend-domain.com",
-];
-// ✅ DB Instance
-const dataBase = new db_1.default();
-// ✅ Swagger instance
-const SwaggerLayerKit = new SwaggerLayer_1.default();
-/* ---------------- DB INIT (IMPORTANT) ---------------- */
-const onUpdateDBBase = () => {
-    dataBase.MONGODB_URL =
-        "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net";
-    dataBase.dbName = "Simba_Sample";
-    dataBase.collectionName = "simba_sample";
-    dataBase.doConnectInit();
-};
-/* ---------------- Swagger INIT ---------------- */
-const onUpdateSwagger = () => {
-    SwaggerLayerKit.app = app;
-    SwaggerLayerKit.doInit();
-};
-/* ---------------- CORS ---------------- */
-app.use((0, cors_1.default)({
-    origin: (origin, callback) => {
-        if (origin === null || origin === void 0 ? void 0 : origin.includes("localhost"))
-            return callback(null, true);
-        if (allowedOrigins.includes(origin) || !origin)
-            return callback(null, true);
-        callback(new Error("Not allowed by CORS"));
-    },
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send("Something broke!");
+});
+app.get("/:name", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name } = req.params;
+    const simbaSchema = new mongoose_1.default.Schema({
+        name: String,
+        phone: Number,
+    }, { collection: "simba_sample" });
+    const Simba = mongoose_1.default.models.simba || mongoose_1.default.model("simba", simbaSchema);
+    // const Simba = mongoose.model("simba", simbaSchema)
+    const data = yield Simba.find();
+    console.log(data);
+    // console.log(Employee)
+    res.status(200).send(`Name BK : ${JSON.stringify(data)}`);
 }));
-/* ---------------- INIT BEFORE ROUTES ---------------- */
-onUpdateDBBase();
-onUpdateSwagger();
-/* ---------------- ROUTES ---------------- */
-(0, getListAPI_1.default)({ app, dataBase });
-(0, getGetListAPI_1.default)({ app, dataBase });
-// app.use((err: any, req: any, res: any, next: any) => {
-//   console.error(err.stack)
-//   res.status(500).send("Something broke!")
-// })
-// app.get("/:name", (req: any, res: any) => {
-//   const { name } = req.params
-//   res.status(200).send(`Name BK : ${name}`)
-// })
 app.get("/", (req, res) => {
     res.send(`App is working fine BK2`);
 });
