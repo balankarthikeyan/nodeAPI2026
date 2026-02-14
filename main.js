@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const app = express();
 app.use(express.json());
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 9000;
 app.listen(port, () => {
     console.log(`App is listening on port ${port}`);
 });
