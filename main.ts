@@ -7,7 +7,7 @@ import getListAPI from "./getListAPI"
 import getGetListAPI from "./getGetListAPI"
 import cors from "cors"
 dotenv.config()
-
+const port = process.env.PORT || 9000
 const app = express()
 app.use(express.json())
 
@@ -50,8 +50,6 @@ app.use(
     },
   }),
 )
-
-const port = process.env.PORT || 9000
 
 /* ---------------- INIT BEFORE ROUTES ---------------- */
 onUpdateDBBase()
