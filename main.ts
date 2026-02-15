@@ -35,6 +35,7 @@ const onUpdateDBBase = () => {
 /* ---------------- Swagger INIT ---------------- */
 const onUpdateSwagger = () => {
   SwaggerLayerKit.app = app
+  SwaggerLayerKit.PORT = port
   SwaggerLayerKit.doInit()
 }
 

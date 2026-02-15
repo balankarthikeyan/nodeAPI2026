@@ -25,7 +25,8 @@ class SwaggerLayer {
         },
         servers: [
           {
-            url: `http://${this.HOST}:${this.PORT}`,
+            url: `https://node-api-2026.vercel.app`,
+            // url: `http://${this.HOST}:${this.PORT}`,
           },
         ],
       },

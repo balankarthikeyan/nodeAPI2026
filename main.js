@@ -11,6 +11,7 @@ const getListAPI_1 = __importDefault(require("./getListAPI"));
 const getGetListAPI_1 = __importDefault(require("./getGetListAPI"));
 const cors_1 = __importDefault(require("cors"));
 dotenv_1.default.config();
+const port = process.env.PORT || 9000;
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 const allowedOrigins = [
@@ -33,6 +34,7 @@ const onUpdateDBBase = () => {
 /* ---------------- Swagger INIT ---------------- */
 const onUpdateSwagger = () => {
     SwaggerLayerKit.app = app;
+    SwaggerLayerKit.PORT = port;
     SwaggerLayerKit.doInit();
 };
 /* ---------------- CORS ---------------- */
@@ -45,7 +47,6 @@ app.use((0, cors_1.default)({
         callback(new Error("Not allowed by CORS"));
     },
 }));
-const port = process.env.PORT || 9000;
 /* ---------------- INIT BEFORE ROUTES ---------------- */
 onUpdateDBBase();
 onUpdateSwagger();
