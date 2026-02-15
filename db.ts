@@ -1,116 +1,81 @@
-import { MongoClient, ObjectId } from "mongodb"
+import mongoose, { Schema, Model } from "mongoose"
 
-class db {
+class DB {
   MONGODB_URL = "" as string
-  globalClient = null as any
-  dbName = "" as any
+  dbName = "" as string
   collectionName = "" as string
-  dbCollection = null as any
+  globalConnection: typeof mongoose | null = null
+  model: Model<any> | null = null
+
   async setClient() {
-    if (this.globalClient === null) {
-      this.globalClient = await MongoClient.connect(this.MONGODB_URL)
+    if (!this.globalConnection) {
+      this.globalConnection = await mongoose.connect(this.MONGODB_URL, {
+        dbName: this.dbName,
+      })
+      console.log("DB Connected")
     } else {
       console.log("Client Already Connected")
     }
   }
 
-  async getCheckConnection() {
-    return { status: this?.globalClient?.topology?.isConnected() || false }
-  }
   async terminateClient() {
     console.log("DB Close!!!")
-    this.globalClient.close()
-    this.globalClient = null
+    await mongoose.disconnect()
+    this.globalConnection = null
   }
 
   async doConnectInit() {
-    console.log("Connection Established")
-    await this?.setClient()
-    const dbCollection = await this.globalClient
-      .db(this.dbName)
-      .collection(this.collectionName)
-    this.dbCollection = dbCollection
+    await this.setClient()
+
+    const schema = new Schema({}, { strict: false })
+
+    this.model =
+      mongoose.models[this.collectionName] ||
+      mongoose.model(this.collectionName, schema, this.collectionName)
   }
 
   async getDatabase(props: {
     onUpdate: (propsInner: any) => void
-    dbName?: string
-    collectionName?: string
-    skip?: any
-    limit?: any
+    skip?: number
+    limit?: number
   }) {
-    const {
-      onUpdate = () => "",
-      dbName = this.dbName || "",
-      collectionName = this.collectionName || "",
-      skip = 0,
-      limit = 0,
-    } = props || {}
+    const { onUpdate = () => {}, skip = 0, limit = 0 } = props || {}
 
-    // await this?.setClient()
-    // const dbCollection = await this.globalClient
-    //   .db(dbName)
-    //   .collection(collectionName)
+    try {
+      if (!this.model) await this.doConnectInit()
 
-    const dbCollection = this.dbCollection
-    const totalCount = await dbCollection.countDocuments({})
+      const totalCount = await this.model!.countDocuments({})
+      const data = await this.model!.find({}).skip(skip).limit(limit)
 
-    dbCollection
-      .find()
-      .skip(skip)
-      .limit(limit)
-      .toArray((err: any, docs: any) => {})
-      .then((r: any) => {
-        onUpdate({ data: r, totalCount })
-      })
-      .catch((e: any) => {
-        onUpdate({ error: e })
-      })
+      onUpdate({ data, totalCount })
+    } catch (e) {
+      onUpdate({ error: e })
+    }
   }
 
   async doUpdateDatabase(props: {
     onUpdate: (propsInner: any) => void
-    dbName?: string
-    collectionName?: string
     pushObjectData: any
   }) {
-    const {
-      onUpdate = () => "",
-      dbName = this.dbName || "",
-      collectionName = this.collectionName || "",
-      pushObjectData = {},
-    } = props || {}
-    await this?.setClient()
-    const dbCollection = await this.globalClient
-      .db(dbName)
-      .collection(collectionName)
-    const insertResult = await dbCollection.insertOne(pushObjectData)
-    onUpdate(insertResult)
-    await this?.terminateClient()
+    const { onUpdate = () => {}, pushObjectData = {} } = props || {}
+
+    await this.doConnectInit()
+    const result = await this.model!.create(pushObjectData)
+    onUpdate(result)
+    await this.terminateClient()
   }
+
   async doDeleteDatabase(props: {
     onUpdate: (propsInner: any) => void
-    dbName?: string
-    collectionName?: string
-    removeId: any
+    removeId: string
   }) {
-    const {
-      onUpdate = () => "",
-      dbName = this.dbName || "",
-      collectionName = this.collectionName || "",
-      removeId = "",
-    } = props || {}
+    const { onUpdate = () => {}, removeId = "" } = props || {}
 
-    await this?.setClient()
-    const dbCollection = await this.globalClient
-      .db(dbName)
-      .collection(collectionName)
-    const insertResult = await dbCollection.deleteOne({
-      _id: new ObjectId(removeId),
-    })
-    onUpdate(insertResult)
-    await this?.terminateClient()
+    await this.doConnectInit()
+    const result = await this.model!.deleteOne({ _id: removeId })
+    onUpdate(result)
+    await this.terminateClient()
   }
 }
 
-export default db
+export default DB

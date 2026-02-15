@@ -1,54 +1,79 @@
 import express from "express"
 import dotenv from "dotenv"
 import mongoose from "mongoose"
+import DB from "./db"
+import SwaggerLayer from "./SwaggerLayer"
+import getListAPI from "./getListAPI"
+import getGetListAPI from "./getGetListAPI"
+import cors from "cors"
 dotenv.config()
 
 const app = express()
 app.use(express.json())
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://your-frontend-domain.com",
+]
+
+// ✅ DB Instance
+const dataBase = new DB() as any
+
+// ✅ Swagger instance
+const SwaggerLayerKit: any = new SwaggerLayer() as any
+/* ---------------- DB INIT (IMPORTANT) ---------------- */
+const onUpdateDBBase = () => {
+  dataBase.MONGODB_URL =
+    "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net"
+  dataBase.dbName = "Simba_Sample"
+  dataBase.collectionName = "simba_sample"
+
+  dataBase.doConnectInit()
+}
+
+/* ---------------- Swagger INIT ---------------- */
+const onUpdateSwagger = () => {
+  SwaggerLayerKit.app = app
+  SwaggerLayerKit.doInit()
+}
+
+/* ---------------- CORS ---------------- */
+app.use(
+  cors({
+    origin: (origin: any, callback) => {
+      if (origin?.includes("localhost")) return callback(null, true)
+      if (allowedOrigins.includes(origin) || !origin)
+        return callback(null, true)
+
+      callback(new Error("Not allowed by CORS"))
+    },
+  }),
+)
+
 const port = process.env.PORT || 9000
 
-mongoose
-  .connect("mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net")
-  .then(() => console.log("DB connected"))
-  .catch((err) => console.log(err))
+/* ---------------- INIT BEFORE ROUTES ---------------- */
+onUpdateDBBase()
+onUpdateSwagger()
 
-const db = mongoose.connection.useDb("Simba_Sample")
+/* ---------------- ROUTES ---------------- */
+getListAPI({ app, dataBase })
+getGetListAPI({ app, dataBase })
+
 // mongoose
-//   .connect(
-//     (process.env.MONGO_URI ||
-//       "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net") as string,
-//   )
-//   .then(() => console.log("MongoDB connected"))
-//   .catch((err) => console.error("MongoDB connection error:", err))
+//   .connect("mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net")
+//   .then(() => console.log("DB connected"))
+//   .catch((err) => console.log(err))
+
+// const db = mongoose.connection.useDb("Simba_Sample")
+
 app.listen(port, () => {
   console.log(`App is listening on port ${port}`)
 })
 
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error(err.stack)
-  res.status(500).send("Something broke!")
-})
-
-app.get("/:name", async (req: any, res: any) => {
-  const { name } = req.params
-
-  const schema = new mongoose.Schema(
-    {
-      name: String,
-      phone: Number,
-    },
-    { collection: "simba_sample" }, // collection name
-  )
-
-  const Simba = db.models.Simba || db.model("Simba", schema, "simba_sample")
-  const data = await Simba.find()
-  console.log(data)
-  res.status(200).send({ data })
-})
-
 app.get("/", (req: any, res: any) => {
-  res.send(`App is working fine BK2`)
+  res.send(`App is working fine BK3`)
 })
 
 app.use((req: any, res: any, next: any) => {
