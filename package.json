@@ -6,7 +6,7 @@
   "scripts": {
     "compress": "npx tsc && uglifyjs ./build/app.js -o ./build/app.min.js --compress --mangle",
     "build": "npm run compress && --watch & nodemon ./build/app.min.js",
-    "starts": "npx tsc && nodemon server.js",
+    "starts": "npx tsc && nodemon main.js",
     "builds": "npx tsc",
     "start": "node main.js",
     "preview": "concurrently \"npx tsc --watch\" \"nodemon preview.js\"",

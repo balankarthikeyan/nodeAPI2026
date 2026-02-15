@@ -20,9 +20,10 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 const port = process.env.PORT || 9000;
 mongoose_1.default
-    .connect("mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net/Simba_Sample")
+    .connect("mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net")
     .then(() => console.log("DB connected"))
     .catch((err) => console.log(err));
+const db = mongoose_1.default.connection.useDb("Simba_Sample");
 // mongoose
 //   .connect(
 //     (process.env.MONGO_URI ||
@@ -39,11 +40,16 @@ app.use((err, req, res, next) => {
 });
 app.get("/:name", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name } = req.params;
-    const simbaSchema = new mongoose_1.default.Schema({
+    // const schema = new mongoose.Schema({
+    //   name: String,
+    //   phone: Number,
+    // })
+    const schema = new mongoose_1.default.Schema({
         name: String,
         phone: Number,
     }, { collection: "simba_sample" });
-    const Simba = mongoose_1.default.models.simba || mongoose_1.default.model("simba", simbaSchema);
+    const Simba = db.models.Simba || db.model("Simba", schema, "simba_sample");
+    // const Simba = mongoose.models.simba || mongoose.model("simba", simbaSchema)
     // const Simba = mongoose.model("simba", simbaSchema)
     const data = yield Simba.find();
     console.log(data);

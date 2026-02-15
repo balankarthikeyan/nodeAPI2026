@@ -9,12 +9,11 @@ app.use(express.json())
 const port = process.env.PORT || 9000
 
 mongoose
-  .connect(
-    "mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net/Simba_Sample",
-  )
+  .connect("mongodb+srv://admin:admin@simba-cluster.wv87zgs.mongodb.net")
   .then(() => console.log("DB connected"))
   .catch((err) => console.log(err))
 
+const db = mongoose.connection.useDb("Simba_Sample")
 // mongoose
 //   .connect(
 //     (process.env.MONGO_URI ||
@@ -34,7 +33,7 @@ app.use((err: any, req: any, res: any, next: any) => {
 app.get("/:name", async (req: any, res: any) => {
   const { name } = req.params
 
-  const simbaSchema = new mongoose.Schema(
+  const schema = new mongoose.Schema(
     {
       name: String,
       phone: Number,
@@ -42,11 +41,9 @@ app.get("/:name", async (req: any, res: any) => {
     { collection: "simba_sample" }, // collection name
   )
 
-  const Simba = mongoose.models.simba || mongoose.model("simba", simbaSchema)
-  // const Simba = mongoose.model("simba", simbaSchema)
+  const Simba = db.models.Simba || db.model("Simba", schema, "simba_sample")
   const data = await Simba.find()
   console.log(data)
-  // console.log(Employee)
   res.status(200).send({ data })
 })
 
